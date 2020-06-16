@@ -389,6 +389,30 @@ mod tests_json_map {
 }
 
 #[cfg(test)]
+mod tests_parse_json {
+    use crate::JsonType;
+    use json::JsonValue;
+
+    #[test]
+    fn smoke_test() {
+        let value = JsonValue::parse_json(r#"[{"array":[]},{"boolean":false},{"float":2.3},{"integer":1},{"null":null},{"object":{}},{"string":"string"}]"#).unwrap();
+
+        assert_eq!(
+            value,
+            rust_json![[
+                {"array": []},
+                {"boolean": false},
+                {"float": 2.3},
+                {"integer": 1},
+                {"null": null},
+                {"object": {}},
+                {"string": "string"},
+            ]]
+        );
+    }
+}
+
+#[cfg(test)]
 mod tests_to_json_string {
     use crate::json_type::JsonTypeToString;
 
