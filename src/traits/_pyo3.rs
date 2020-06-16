@@ -1,4 +1,5 @@
 use crate::{
+    error::{ParseJsonError, ParseJsonErrorKind},
     json_type::{JsonMap, JsonMapTrait, JsonType, ToRustType},
     rust_type_impl::RustType,
 };
@@ -121,6 +122,14 @@ impl JsonType for PyAny {
     #[must_use]
     fn as_string(&self) -> Option<&str> {
         self.extract().ok()
+    }
+
+    #[must_use]
+    fn parse_json(_json_str: &str) -> Result<Self, ParseJsonError> {
+        Err(ParseJsonError {
+            kind: ParseJsonErrorKind::UnsupportedDataType { type_str: "PyAny".to_owned() },
+            location: None,
+        })
     }
 
     #[must_use]

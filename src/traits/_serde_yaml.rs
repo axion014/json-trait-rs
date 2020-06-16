@@ -1,4 +1,5 @@
 use crate::{
+    error::{ParseJsonError, ParseJsonErrorKind},
     json_type::{JsonMap, JsonMapTrait, JsonType, ThreadSafeJsonType, ToRustType},
     rust_type_impl::RustType,
 };
@@ -96,6 +97,23 @@ impl JsonType for Value {
     #[must_use]
     fn as_string(&self) -> Option<&str> {
         self.as_str()
+    }
+
+    #[must_use]
+    fn parse_json(json_str: &str) -> Result<Self, ParseJsonError> {
+        serde_yaml::from_str(json_str).map_err(|err| {
+            if let Some(loc) = err.location() {
+                ParseJsonError {
+                    kind: ParseJsonErrorKind::Unknown(Box::new(err)),
+                    location: Some((loc.line(), loc.column())),
+                }
+            } else {
+                ParseJsonError {
+                    kind: ParseJsonErrorKind::Unknown(Box::new(err)),
+                    location: None,
+                }
+            }
+        })
     }
 
     #[must_use]

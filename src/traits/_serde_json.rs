@@ -1,4 +1,5 @@
 use crate::{
+    error::{ParseJsonError, ParseJsonErrorKind},
     json_type::{JsonMap, JsonMapTrait, JsonType, JsonTypeToString, ThreadSafeJsonType, ToRustType},
     rust_type_impl::RustType,
 };
@@ -102,6 +103,22 @@ impl JsonType for Value {
     #[must_use]
     fn as_string(&self) -> Option<&str> {
         self.as_str()
+    }
+
+    #[must_use]
+    fn parse_json(json_str: &str) -> Result<Self, ParseJsonError> {
+        serde_json::from_str(json_str).map_err(|err| {
+            let location = Some((err.line(), err.column()));
+            ParseJsonError {
+                kind: match err.classify() {
+                    serde_json::error::Category::Io => ParseJsonErrorKind::IoError(err.into()),
+                    serde_json::error::Category::Syntax => ParseJsonErrorKind::SyntaxError { description: format!("{}", err) },
+                    serde_json::error::Category::Data => ParseJsonErrorKind::DataTypeMismatch { description: format!("{}", err) },
+                    serde_json::error::Category::Eof => ParseJsonErrorKind::UnexpectedEndOfJson { description: format!("{}", err) },
+                },
+                location,
+            }
+        })
     }
 
     #[must_use]

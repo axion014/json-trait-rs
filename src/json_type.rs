@@ -1,4 +1,8 @@
-use crate::{error::Error, fragment_helpers::fragment_components_from_fragment, rust_type_impl::RustType};
+use crate::{
+    error::{Error, ParseJsonError},
+    fragment_helpers::fragment_components_from_fragment,
+    rust_type_impl::RustType,
+};
 use std::{collections::HashMap, convert::TryFrom, fmt::Debug, ops::Deref};
 
 #[allow(clippy::module_name_repetitions)]
@@ -104,6 +108,10 @@ pub trait JsonType: JsonTypeToString + ToRustType {
     where
         Self: Sized;
     fn as_string(&self) -> Option<&str>;
+
+    fn parse_json(_json_str: &str) -> Result<Self, ParseJsonError>
+    where
+        Self: Sized;
 
     fn get_attribute(&self, attribute_name: &str) -> Option<&Self>
     where

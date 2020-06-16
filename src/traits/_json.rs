@@ -1,4 +1,5 @@
 use crate::{
+    error::{ParseJsonError, ParseJsonErrorKind},
     json_type::{JsonMap, JsonMapTrait, JsonType, JsonTypeToString, ThreadSafeJsonType, ToRustType},
     rust_type_impl::RustType,
 };
@@ -93,6 +94,25 @@ impl JsonType for JsonValue {
     #[must_use]
     fn as_string(&self) -> Option<&str> {
         self.as_str()
+    }
+
+    #[must_use]
+    fn parse_json(json_str: &str) -> Result<Self, ParseJsonError> {
+        json::parse(json_str).map_err(|err| ParseJsonError {
+            kind: match err {
+                json::Error::UnexpectedCharacter { ch: _, line, column } => {
+                    return ParseJsonError {
+                        kind: ParseJsonErrorKind::SyntaxError { description: format!("{}", err) },
+                        location: Some((line, column)),
+                    }
+                }
+                json::Error::UnexpectedEndOfJson => ParseJsonErrorKind::UnexpectedEndOfJson { description: format!("{}", err) },
+                json::Error::ExceededDepthLimit => ParseJsonErrorKind::SyntaxError { description: format!("{}", err) },
+                json::Error::FailedUtf8Parsing => ParseJsonErrorKind::SyntaxError { description: format!("{}", err) },
+                json::Error::WrongType(_) => ParseJsonErrorKind::DataTypeMismatch { description: format!("{}", err) },
+            },
+            location: None,
+        })
     }
 
     #[must_use]

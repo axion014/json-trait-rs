@@ -1,4 +1,5 @@
 use crate::{
+    error::ParseJsonError,
     json_type::{JsonMap, JsonMapTrait, JsonType, JsonTypeToString, ToRustType},
     ThreadSafeJsonType,
 };
@@ -196,6 +197,23 @@ impl JsonType for RustType {
             Some(s)
         } else {
             None
+        }
+    }
+
+    #[must_use]
+    #[allow(unused_variables)]
+    fn parse_json(json_str: &str) -> Result<Self, ParseJsonError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "json")] {
+                Ok(json::JsonValue::parse_json(json_str)?.to_rust_type())
+            } else if #[cfg(feature = "serde_json")] {
+                Ok(serde_json::Value::parse_json(json_str)?.to_rust_type())
+            } else {
+                Err(ParseJsonError {
+                    kind: crate::error::ParseJsonErrorKind::ParserUnavailable,
+					location: None,
+                })
+            }
         }
     }
 
